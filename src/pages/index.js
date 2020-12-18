@@ -1,5 +1,6 @@
-import React from "react"
+import React from "react";
+import Viz from "../viz";
 
 export default function Home() {
-  return <div>Hello world!</div>
+  return <Viz/>;
 }
