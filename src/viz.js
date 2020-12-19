@@ -83,17 +83,21 @@ const Viz = () => {
     renderer.setSize(window.innerWidth, window.innerHeight);
 
     const geometry = new THREE.BoxGeometry();
-    const material = new THREE.MeshPhongMaterial({color: '#F00'});
+    const material = new THREE.MeshPhongMaterial({color: '#FFFFFF'});
     const cube = new THREE.Mesh( geometry, material );
-    scene.add( cube );
+    scene.add(cube);
 
-    const color = 0xFFFFFF;
     const intensity = 1;
-    const light = new THREE.DirectionalLight(color, intensity);
-    light.position.set(0, 10, 0);
-    light.target.position.set(-5, 0, 0);
-    scene.add(light);
-    scene.add(light.target);
+    const redLight = new THREE.DirectionalLight(0xFF0000, intensity);
+    redLight.position.set(5, 10, -5);
+    redLight.target.position.set(0, 0, 0);
+    scene.add(redLight);
+    scene.add(redLight.target);
+    const blueLight = new THREE.DirectionalLight(0x0000FF, intensity);
+    blueLight.position.set(-5, -10, -2);
+    blueLight.target.position.set(0, 0, 0);
+    scene.add(blueLight);
+    scene.add(blueLight.target);
 
     camera.position.z = 5;
 
@@ -103,10 +107,13 @@ const Viz = () => {
       if (orbPannerNode.positionX.value >= orbMaxX) {
         orbPosition.X *= -1;
       }
-      orbPosition.X += 0.02;
+      orbPosition.X += 0.05;
       orbPannerNode.positionX.value = orbPosition.X;
 
       cube.position.x = orbPosition.X;
+      // TODO is pointing the lights at the cube working?
+      redLight.target.position.set(orbPosition.X, orbPosition.Y, orbPosition.Z);
+      blueLight.target.position.set(orbPosition.X, orbPosition.Y, orbPosition.Z);
 
       cube.rotation.x += 0.01;
       cube.rotation.y += 0.01;
@@ -114,7 +121,7 @@ const Viz = () => {
       // Scale the cube based on real time frequency data
       analyser.getByteFrequencyData(dataArray);
       const [low, mid, high] = [dataArray[0], dataArray[20], dataArray[60]];
-      const scale = (x) => (x / 200) * 3.0 + 0.5;
+      const scale = (x) => (x / 200) * 2.0 + 0.5;
       cube.scale.x = scale(low);
       cube.scale.y = scale(mid);
       cube.scale.z = scale(high);
