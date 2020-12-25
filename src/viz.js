@@ -80,6 +80,7 @@ const Viz = () => {
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
+    scene.background = new THREE.Color(0x000000);
 
     // Lights
     const intensity = 1;
@@ -166,8 +167,8 @@ const Viz = () => {
 
         // Overwrite this point
         positions[i + 0] = prevPoint[0] + particleSize; // x (shifted right)
-        positions[i + 1] = prevPoint[1] * 1.001; // y
-        positions[i + 2] = prevPoint[2] * 1.001; // z
+        positions[i + 1] = prevPoint[1] * 1.001; // y with expansion
+        positions[i + 2] = prevPoint[2] * 0.999; // z with contraction
 
         // Save for next iteration overwrite
         prevPoint[0] = currPoint[0]; // x
