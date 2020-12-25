@@ -81,11 +81,6 @@ const Viz = () => {
     const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
 
-    const geometry = new THREE.BoxGeometry();
-    const material = new THREE.MeshPhongMaterial({color: '#FFFFFF'});
-    const cube = new THREE.Mesh( geometry, material );
-    // scene.add(cube);
-
     // Lights
     const intensity = 1;
     const redLight = new THREE.DirectionalLight(0xFF0000, intensity);
@@ -123,7 +118,7 @@ const Viz = () => {
     bufferGeom.setAttribute('size', new THREE.Float32BufferAttribute(sizes, 1));
     const pointsMaterial = new THREE.PointsMaterial( { size: particleSize, vertexColors: true } );
 
-    const group = new THREE.Group();
+    const orbGroup = new THREE.Group();
     const numHairs = 720;
     const numSlices = 48;
     const numHairsPerSlice = numHairs / numSlices;
@@ -135,10 +130,10 @@ const Viz = () => {
         const zRotDeg = (360.0 / numHairsPerSlice) * j;
         points.rotation.y = THREE.MathUtils.degToRad(yRotDeg);
         points.rotation.z = THREE.MathUtils.degToRad(zRotDeg);
-        group.add(points);
+        orbGroup.add(points);
       }
     }
-    scene.add(group);
+    scene.add(orbGroup);
 
     const animate = () => {
       requestAnimationFrame(animate);
@@ -149,21 +144,12 @@ const Viz = () => {
       orbPosition.X += 0.05;
       orbPannerNode.positionX.value = orbPosition.X;
 
-      cube.position.x = orbPosition.X;
-      // TODO is pointing the lights at the cube working?
+      // TODO is pointing the lights at the orb working?
       redLight.target.position.set(orbPosition.X, orbPosition.Y, orbPosition.Z);
       blueLight.target.position.set(orbPosition.X, orbPosition.Y, orbPosition.Z);
 
-      cube.rotation.x += 0.01;
-      cube.rotation.y += 0.01;
-
-      // Scale the cube based on real time frequency data
       analyser.getByteFrequencyData(dataArray);
       const [low, mid, high] = [dataArray[0], dataArray[20], dataArray[60]];
-      const scale = (x) => (x / 200) * 2.0 + 0.5;
-      cube.scale.x = scale(low);
-      cube.scale.y = scale(mid);
-      cube.scale.z = scale(high);
 
       // Animate the particles
       const positions = bufferGeom.attributes.position.array;
@@ -195,9 +181,9 @@ const Viz = () => {
       bufferGeom.attributes.position.needsUpdate = true;
       // TODO: Perhaps need to recompute boundingBox or Sphere? https://threejs.org/docs/#manual/en/introduction/How-to-update-things
 
-      group.rotation.x += 0.005;
-      group.rotation.y += 0.01;
-      group.position.x = orbPosition.X;
+      orbGroup.rotation.x += 0.005;
+      orbGroup.rotation.y += 0.01;
+      orbGroup.position.x = orbPosition.X;
 
       renderer.render(scene, camera);
     };
