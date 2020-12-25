@@ -12,7 +12,7 @@ const Viz = () => {
     // Spatialization
     // Listener is our position in space
     const listener = audioContext.listener;
-    listener.positionX.value = 0;
+    listener.positionX.value = 0; // TODO this doesn't work in firefox: https://developer.mozilla.org/en-US/docs/Web/API/AudioListener#Methods
     listener.positionY.value = 0;
     listener.positionZ.value = 2;
     listener.forwardX.value = 0;
@@ -58,7 +58,6 @@ const Viz = () => {
     analyser.fftSize = 256;
     const bufferLength = analyser.frequencyBinCount;
     let dataArray = new Uint8Array(bufferLength);
-    console.log('dataArray', dataArray);
 
     // Connnect our audio graph
     track
@@ -87,6 +86,7 @@ const Viz = () => {
     const cube = new THREE.Mesh( geometry, material );
     scene.add(cube);
 
+    // Lights
     const intensity = 1;
     const redLight = new THREE.DirectionalLight(0xFF0000, intensity);
     redLight.position.set(5, 10, -5);
@@ -100,6 +100,43 @@ const Viz = () => {
     scene.add(blueLight.target);
 
     camera.position.z = 5;
+
+    // Points
+    const numParticles = 128;
+    const bufferGeom = new THREE.BufferGeometry();
+    const positions = [];
+    const colors = [];
+    const sizes = [];
+    const color = new THREE.Color();
+    const particleSize = 0.025;
+    color.setRGB(1.0, 0, 0);
+    for (let i = 0; i < numParticles; i++) {
+      const x = i * particleSize;
+      const y = 0;
+      const z = 0;
+      positions.push(x, y, z);
+      colors.push(color.r, color.g, color.b);
+      sizes.push(0.001);
+    }
+    bufferGeom.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    bufferGeom.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+    bufferGeom.setAttribute('size', new THREE.Float32BufferAttribute(sizes, 1));
+    const pointsMaterial = new THREE.PointsMaterial( { size: particleSize, vertexColors: true } );
+
+    const numHairs = 360;
+    const numSlices = 24;
+    const numHairsPerSlice = numHairs / numSlices;
+    for (let i = 0; i < numSlices; i++) {
+      // Slices rotate around the y-axis
+      const yRotDeg = (360.0 / numSlices) * i;
+      for (let j = 0; j < numHairsPerSlice; j++) {
+        const points = new THREE.Points( bufferGeom, pointsMaterial );
+        const zRotDeg = (360.0 / numHairsPerSlice) * j;
+        points.rotation.y = THREE.MathUtils.degToRad(yRotDeg);
+        points.rotation.z = THREE.MathUtils.degToRad(zRotDeg);
+        scene.add(points);
+      }
+    }
 
     const animate = () => {
       requestAnimationFrame(animate);
@@ -126,7 +163,35 @@ const Viz = () => {
       cube.scale.y = scale(mid);
       cube.scale.z = scale(high);
 
-      renderer.render( scene, camera );
+      // Animate the particles
+      const positions = bufferGeom.attributes.position.array;
+
+      // 1. Shift everything right
+      // TODO: This is conceptually easier, but not efficient. Should
+      // do a circular buffer where we track end position, and then just
+      // do +1 to x coord (no need to shift verticies in the array)
+      let prevPoint = [positions[0], positions[1], positions[2]];
+      let currPoint = [0,0,0];
+      for (let particleIdx = 1; particleIdx < numParticles; particleIdx++) {
+        const i = particleIdx * 3;
+        currPoint = [positions[i+0], positions[i+1], positions[i+2]];
+
+        // Overwrite this point
+        positions[i + 0] = prevPoint[0] + particleSize; // x (shifted right)
+        positions[i + 1] = prevPoint[1] * 1.001; // y
+        positions[i + 2] = prevPoint[2]; // z
+
+        // Save for next iteration overwrite
+        prevPoint[0] = currPoint[0]; // x
+        prevPoint[1] = currPoint[1]; // y
+        prevPoint[2] = currPoint[2]; // z
+      }
+      // 2. Set new first point Y position
+      positions[1] = mid * 0.005;
+      bufferGeom.attributes.position.needsUpdate = true;
+      // TODO: Perhaps need to recompute boundingBox or Sphere? https://threejs.org/docs/#manual/en/introduction/How-to-update-things
+
+      renderer.render(scene, camera);
     };
 
     animate();
