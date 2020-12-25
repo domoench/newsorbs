@@ -84,7 +84,7 @@ const Viz = () => {
     const geometry = new THREE.BoxGeometry();
     const material = new THREE.MeshPhongMaterial({color: '#FFFFFF'});
     const cube = new THREE.Mesh( geometry, material );
-    scene.add(cube);
+    // scene.add(cube);
 
     // Lights
     const intensity = 1;
@@ -99,10 +99,10 @@ const Viz = () => {
     scene.add(blueLight);
     scene.add(blueLight.target);
 
-    camera.position.z = 5;
+    camera.position.z = 10;
 
     // Points
-    const numParticles = 128;
+    const numParticles = 100;
     const bufferGeom = new THREE.BufferGeometry();
     const positions = [];
     const colors = [];
@@ -123,8 +123,9 @@ const Viz = () => {
     bufferGeom.setAttribute('size', new THREE.Float32BufferAttribute(sizes, 1));
     const pointsMaterial = new THREE.PointsMaterial( { size: particleSize, vertexColors: true } );
 
-    const numHairs = 360;
-    const numSlices = 24;
+    const group = new THREE.Group();
+    const numHairs = 720;
+    const numSlices = 48;
     const numHairsPerSlice = numHairs / numSlices;
     for (let i = 0; i < numSlices; i++) {
       // Slices rotate around the y-axis
@@ -134,9 +135,10 @@ const Viz = () => {
         const zRotDeg = (360.0 / numHairsPerSlice) * j;
         points.rotation.y = THREE.MathUtils.degToRad(yRotDeg);
         points.rotation.z = THREE.MathUtils.degToRad(zRotDeg);
-        scene.add(points);
+        group.add(points);
       }
     }
+    scene.add(group);
 
     const animate = () => {
       requestAnimationFrame(animate);
@@ -179,7 +181,7 @@ const Viz = () => {
         // Overwrite this point
         positions[i + 0] = prevPoint[0] + particleSize; // x (shifted right)
         positions[i + 1] = prevPoint[1] * 1.001; // y
-        positions[i + 2] = prevPoint[2]; // z
+        positions[i + 2] = prevPoint[2] * 1.001; // z
 
         // Save for next iteration overwrite
         prevPoint[0] = currPoint[0]; // x
@@ -187,9 +189,15 @@ const Viz = () => {
         prevPoint[2] = currPoint[2]; // z
       }
       // 2. Set new first point Y position
+      positions[0] = low * 0.005;
       positions[1] = mid * 0.005;
+      positions[2] = high * 0.005;
       bufferGeom.attributes.position.needsUpdate = true;
       // TODO: Perhaps need to recompute boundingBox or Sphere? https://threejs.org/docs/#manual/en/introduction/How-to-update-things
+
+      group.rotation.x += 0.005;
+      group.rotation.y += 0.01;
+      group.position.x = orbPosition.X;
 
       renderer.render(scene, camera);
     };
