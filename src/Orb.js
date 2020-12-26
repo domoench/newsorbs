@@ -135,32 +135,31 @@ export default class Orb {
     const rangeX = room.maxX - room.minX;
     const rangeY = room.maxY - room.minY;
     const rangeZ = room.maxZ - room.minZ;
-    this.destination.x = (Math.random() * rangeX) - rangeX / 2; // TODO util function randInRange
+    this.destination.x = (Math.random() * rangeX) - rangeX / 2; // TODO (THREE.MathUtils.randFloat)
     this.destination.y = (Math.random() * rangeY) - rangeY / 2;
     this.destination.z = (Math.random() * rangeZ) - rangeZ / 2;
     console.log('randomDestination', this.destination);
   }
 
-  // Update the orbs properties for 1 animation tick
-  animate() { // TODO dt arg?
-    // Update the Orb's physical properties
-    // Position. Move sort-of towards the destination
-    // For now do a simple/hacky constant component velocity of 0.1 for all x,y,z
-    // TODO velocity, acceleration equations more like real motion.
-    const xDist = this.destination.x - this.position.x;
-    const xDir = xDist / Math.abs(xDist);
-    const yDist = this.destination.y - this.position.y;
-    const yDir = yDist / Math.abs(yDist);
-    const zDist = this.destination.z - this.position.z;
-    const zDir = zDist / Math.abs(zDist);
-    this.position.x += 0.1 * xDir;
-    this.position.y += 0.1 * xDir;
-    this.position.z += 0.1 * xDir;
-    // TODO: Another hack shortcut to fix later
+  // Update the position according to destination and velocity
+  updatePosition() {
+    const velocity = 0.1;
+    const displacement = new THREE.Vector3().subVectors(this.destination, this.position);
+    // unit vector towards destination
+    const unitV = displacement.clone().normalize();
+    // Scale to desired velocity magnitude
+    const v = unitV.multiplyScalar(velocity);
+    this.position.add(v);
+
     // If we are 'close' to our destination, set a new one
-    if (Math.abs(this.position.x - this.destination.x) < 0.2) {
+    if (displacement.length() < 0.1) {
       this.setRandomDestination();
     }
+  }
+
+  // Update the orbs properties for 1 animation tick
+  animate() { // TODO dt arg?
+    this.updatePosition();
 
     // Update sound position
     this.pannerNode.positionX.value = this.position.x;
