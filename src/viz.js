@@ -2,9 +2,11 @@ import React, { useEffect, useRef } from "react";
 import * as THREE from "three";
 
 import Orb from "./Orb";
+import { room } from "./constants";
 
 const Viz = () => {
   const canvasRef = useRef(null);
+  const cameraPosition = new THREE.Vector3(10,10,room.maxZ);
 
   useEffect(() => {
     const audioContext = new AudioContext();
@@ -12,9 +14,9 @@ const Viz = () => {
     // Spatialization
     // Listener is our position in space
     const listener = audioContext.listener;
-    listener.positionX.value = 0; // TODO this doesn't work in firefox: https://developer.mozilla.org/en-US/docs/Web/API/AudioListener#Methods
-    listener.positionY.value = 0;
-    listener.positionZ.value = 30;
+    listener.positionX.value = cameraPosition.x; // TODO this doesn't work in firefox: https://developer.mozilla.org/en-US/docs/Web/API/AudioListener#Methods
+    listener.positionY.value = cameraPosition.y;
+    listener.positionZ.value = cameraPosition.z;
     listener.forwardX.value = 0;
     listener.forwardY.value = 0;
     listener.forwardZ.value = -1;
@@ -28,27 +30,25 @@ const Viz = () => {
       audioContext: audioContext,
       baseColor: 0xff0000,
     });
-    const orb2 = new Orb({
-      position: new THREE.Vector3(10, 0, 0),
-      audioSelector: 'audio#random',
-      audioContext: audioContext,
-      baseColor: 0x00ff00,
-    });
+    // const orb2 = new Orb({
+      // position: new THREE.Vector3(10, 0, 0),
+      // audioSelector: 'audio#random',
+      // audioContext: audioContext,
+      // baseColor: 0x00ff00,
+    // });
 
     document.querySelector('button#continue').addEventListener('click', () => {
       audioContext.resume().then(async () => {
         console.log('Playback resumed successfully');
         orb.audioElement.play();
-        orb2.audioElement.play();
+        // orb2.audioElement.play();
       });
     });
 
     // VISUALS
-
-    // buildRenderer: https://github.com/PierfrancescoSoffritti/pierfrancescosoffritti.com/blob/master/src/components/home/header/threejs/SceneManager.js#L32
     const canvas = canvasRef.current;
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.z = 30; // TODO need to keep camera position and listener position in sync
+    camera.position.z = cameraPosition.z;
 
     const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -56,14 +56,22 @@ const Viz = () => {
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x000000);
 
+    const roomCubeGeom = new THREE.CubeGeometry(room.maxX - room.minX, room.maxY - room.minY, room.maxZ - room.minZ);
+    const roomCubeMaterial = new THREE.MeshBasicMaterial({
+      color: 0x0000ff,
+      wireframe: true,
+    });
+    const roomMesh = new THREE.Mesh(roomCubeGeom, roomCubeMaterial);
+    scene.add(roomMesh);
+
     orb.addToScene(scene);
-    orb2.addToScene(scene);
+    // orb2.addToScene(scene);
 
     const animate = () => {
       requestAnimationFrame(animate);
 
       orb.animate();
-      orb2.animate();
+      // orb2.animate();
 
       renderer.render(scene, camera);
     };

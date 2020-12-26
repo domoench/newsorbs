@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { room } from "./constants";
 
 // State:
 //   - Stream URL
@@ -23,14 +24,6 @@ import * as THREE from "three";
 // Mainly to update them all in sync on each animation tick.
 
 // TODO move some of these to a constants/config file
-const room = {
-  minX: -60,
-  maxX: 60,
-  minY: -60,
-  maxY: 60,
-  minZ: -60,
-  maxZ: 60,
-};
 const numParticles = 100;
 const particleSize = 0.025;
 
