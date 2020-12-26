@@ -57,7 +57,7 @@ const Viz = () => {
     analyser.smoothingTimeConstant = 0.8;
     analyser.fftSize = 256;
     const bufferLength = analyser.frequencyBinCount;
-    let dataArray = new Uint8Array(bufferLength);
+    let freqDataArray = new Uint8Array(bufferLength);
 
     // Connnect our audio graph
     track
@@ -76,10 +76,13 @@ const Viz = () => {
 
     // buildRenderer: https://github.com/PierfrancescoSoffritti/pierfrancescosoffritti.com/blob/master/src/components/home/header/threejs/SceneManager.js#L32
     const canvas = canvasRef.current;
-    const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.z = 10;
+
     const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
+
+    const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x000000);
 
     // Lights
@@ -94,8 +97,6 @@ const Viz = () => {
     blueLight.target.position.set(0, 0, 0);
     scene.add(blueLight);
     scene.add(blueLight.target);
-
-    camera.position.z = 10;
 
     // Points
     const numParticles = 100;
@@ -136,21 +137,8 @@ const Viz = () => {
     }
     scene.add(orbGroup);
 
-    const animate = () => {
-      requestAnimationFrame(animate);
-
-      if (orbPannerNode.positionX.value >= orbMaxX) {
-        orbPosition.X *= -1;
-      }
-      orbPosition.X += 0.05;
-      orbPannerNode.positionX.value = orbPosition.X;
-
-      // TODO is pointing the lights at the orb working?
-      redLight.target.position.set(orbPosition.X, orbPosition.Y, orbPosition.Z);
-      blueLight.target.position.set(orbPosition.X, orbPosition.Y, orbPosition.Z);
-
-      analyser.getByteFrequencyData(dataArray);
-      const [low, mid, high] = [dataArray[0], dataArray[20], dataArray[60]];
+    const animateBufferGeom = (bufferGeom, freqDataArray) => {
+      const [low, mid, high] = [freqDataArray[0], freqDataArray[20], freqDataArray[60]];
 
       // Animate the particles
       const positions = bufferGeom.attributes.position.array;
@@ -181,10 +169,27 @@ const Viz = () => {
       positions[2] = high * 0.005;
       bufferGeom.attributes.position.needsUpdate = true;
       // TODO: Perhaps need to recompute boundingBox or Sphere? https://threejs.org/docs/#manual/en/introduction/How-to-update-things
+    }
 
+    const animate = () => {
+      requestAnimationFrame(animate);
+
+      if (orbPosition.X >= orbMaxX) {
+        orbPosition.X *= -1;
+      }
+      orbPosition.X += 0.05;
+      orbPannerNode.positionX.value = orbPosition.X;
+
+      // TODO is pointing the lights at the orb working?
+      redLight.target.position.set(orbPosition.X, orbPosition.Y, orbPosition.Z);
+      blueLight.target.position.set(orbPosition.X, orbPosition.Y, orbPosition.Z);
+
+      analyser.getByteFrequencyData(freqDataArray);
+      animateBufferGeom(bufferGeom, freqDataArray);
+
+      orbGroup.position.x = orbPosition.X;
       orbGroup.rotation.x += 0.005;
       orbGroup.rotation.y += 0.01;
-      orbGroup.position.x = orbPosition.X;
 
       renderer.render(scene, camera);
     };
