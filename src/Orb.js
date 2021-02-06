@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { room } from "./constants";
+import CircularBufferIndex from "./utils/CircularBufferIndex";
 
 // Orb Class
 // Manages the following
@@ -33,6 +34,9 @@ export default class Orb {
 
     this.destination = new THREE.Vector3();
     this.setRandomDestination();
+
+    // Manage BufferGeometry attribute buffers as circular buffers for animation
+    this.circularBufferIndex = new CircularBufferIndex(numParticles-1, numParticles);
 
     // THREE.JS STATE
     // Initialize BufferGeometry and Points
@@ -127,7 +131,7 @@ export default class Orb {
 
   // Update the position according to destination and velocity
   updatePosition() {
-    const velocity = 0.1;
+    const velocity = 0.0; // TODO restore after debugging
     const displacement = new THREE.Vector3().subVectors(this.destination, this.position);
     // unit vector towards destination
     const unitV = displacement.clone().normalize();
@@ -154,31 +158,24 @@ export default class Orb {
 
     // Animate the particles
     const positions = this.bufferGeom.attributes.position.array;
+    // const colors = this.bufferGeom.attributes.color.array;
+    // TODO animate color and point size with the color and size buffers
 
-    // 1. Shift everything right
-    // TODO: This is conceptually easier, but not efficient. Should
-    // do a circular buffer where we track end position, and then just
-    // do +1 to x coord (no need to shift verticies in the array)
-    let prevPoint = [positions[0], positions[1], positions[2]];
-    let currPoint = [0,0,0];
-    for (let particleIdx = 1; particleIdx < numParticles; particleIdx++) {
+    // 1. Increment all X positions (shift rightwards)
+    for (let particleIdx = 0; particleIdx < numParticles; particleIdx++) {
       const i = particleIdx * 3;
-      currPoint = [positions[i+0], positions[i+1], positions[i+2]];
-
-      // Overwrite this point
-      positions[i + 0] = prevPoint[0] + particleSize; // x (shifted right)
-      positions[i + 1] = prevPoint[1] * 1.001; // y with expansion
-      positions[i + 2] = prevPoint[2] * 0.999; // z with contraction
-
-      // Save for next iteration overwrite
-      prevPoint[0] = currPoint[0]; // x
-      prevPoint[1] = currPoint[1]; // y
-      prevPoint[2] = currPoint[2]; // z
+      positions[i + 0] += particleSize; // Increment X position
     }
-    // 2. Set new first point Y position
-    positions[0] = low * 0.005;
-    positions[1] = mid * 0.005;
-    positions[2] = high * 0.005;
+
+    // 2. Insert new point at end of circular buffer
+    const cbIdx = this.circularBufferIndex.get();
+    console.log('cbIdx', cbIdx);
+    const i = cbIdx * 3;
+    positions[i + 0] = low * 0.005;  // x
+    positions[i + 1] = mid * 0.005;  // y
+    positions[i + 2] = high * 0.005; // z
+    this.circularBufferIndex.decrement();
+
     this.bufferGeom.attributes.position.needsUpdate = true;
     // TODO: Perhaps need to recompute boundingBox or Sphere? https://threejs.org/docs/#manual/en/introduction/How-to-update-things
 
@@ -188,6 +185,5 @@ export default class Orb {
     this.group.position.z = this.position.z;
     this.group.rotation.x += 0.005;
     this.group.rotation.y += 0.01;
-
   }
 }
