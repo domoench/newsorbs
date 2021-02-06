@@ -161,19 +161,23 @@ export default class Orb {
     // const colors = this.bufferGeom.attributes.color.array;
     // TODO animate color and point size with the color and size buffers
 
-    // 1. Increment all X positions (shift rightwards)
+    // 1. Increment all x positions (shift rightwards)
     for (let particleIdx = 0; particleIdx < numParticles; particleIdx++) {
       const i = particleIdx * 3;
-      positions[i + 0] += particleSize; // Increment X position
+      positions[i + 0] += particleSize; // Increment x position
     }
 
-    // 2. Insert new point at end of circular buffer
+    // 2. Replace point at end of circular buffer with new point.
+    //    This new points characteristics are a function of the current
+    //    frequency readings.
     const cbIdx = this.circularBufferIndex.get();
-    console.log('cbIdx', cbIdx);
     const i = cbIdx * 3;
+    // Position
     positions[i + 0] = low * 0.005;  // x
     positions[i + 1] = mid * 0.005;  // y
     positions[i + 2] = high * 0.005; // z
+    // TODO Color
+    // TODO Size
     this.circularBufferIndex.decrement();
 
     this.bufferGeom.attributes.position.needsUpdate = true;
