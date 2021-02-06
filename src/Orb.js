@@ -1,27 +1,18 @@
 import * as THREE from "three";
 import { room } from "./constants";
 
-// State:
-//   - Stream URL
-//   - Position (x,y,z)
-//   - Destination (x, y, z)
-//   - Mass, Velocity, Acceleration?
-//
-//   - Color base
-//   - group <THREE.Group>
-//
-//  Methods
-//   - constructor: Initializes the group (inits Geometry, adds multiple transforme Points, add to scene)
-//   - animate: Updates orb position, and three.js stuff (bufferGeometry attributes,
-//     translates + rotates group)
-//   - setDestination
-
 // Orb Class
 // Manages the following
 // - Orb 'physical' properties: position, destination, etc
 // - Orb's WebAudio audio state
 // - Orb's Three.js state
 // Mainly to update them all in sync on each animation tick.
+
+// TODO Audio Changes
+// - Possible to normalize the gain of the tracks?
+// - Calibrate the distance model params so that when the orb
+//   is 'far' you don't hear it, and it's loud when close.
+// - Add reverb
 
 // TODO move some of these to a constants/config file
 const numParticles = 100;
@@ -145,7 +136,7 @@ export default class Orb {
     this.position.add(v);
 
     // If we are 'close' to our destination, set a new one
-    if (displacement.length() < 0.1) {
+    if (displacement.length() < velocity) {
       this.setRandomDestination();
     }
   }
