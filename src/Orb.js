@@ -45,21 +45,20 @@ export default class Orb {
 
     // THREE.JS STATE
     // Initialize BufferGeometry and Points
+    // TODO Consider interleaved BufferGeometry
+    // TODO learn how to animate particle sizes: https://github.com/mrdoob/three.js/blob/master/examples/webgl_buffergeometry_custom_attributes_particles.html
     this.bufferGeom = new THREE.BufferGeometry();
     const positions = [];
     const colors = [];
-    const sizes = [];
     for (let i = 0; i < numParticles; i++) {
       const x = i * particleSize;
       const y = 0;
       const z = 0;
       positions.push(x, y, z);
       colors.push(this.colorGradient[1].r, this.colorGradient[1].g, this.colorGradient[1].b);
-      sizes.push(0.001);
     }
     this.bufferGeom.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
     this.bufferGeom.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-    this.bufferGeom.setAttribute('size', new THREE.Float32BufferAttribute(sizes, 1));
     this.pointsMaterial = new THREE.PointsMaterial( { size: particleSize, vertexColors: true } );
 
     this.group = new THREE.Group();
@@ -167,12 +166,17 @@ export default class Orb {
     // Animate the particles
     const positions = this.bufferGeom.attributes.position.array;
     const colors = this.bufferGeom.attributes.color.array;
-    // TODO animate color and point size with the color and size buffers
 
-    // 1. Increment all x positions (shift rightwards)
+    // 1. Update all existing particles
     for (let particleIdx = 0; particleIdx < numParticles; particleIdx++) {
       const i = particleIdx * 3;
+      // Position: Shift rightwards in X axis over time
       positions[i + 0] += particleSize; // Increment x position
+
+      // Color: Darken over time (poor-man's fade)
+      colors[i + 0] *= 0.985; // r
+      colors[i + 1] *= 0.985; // g
+      colors[i + 2] *= 0.985; // b
     }
 
     // 2. Replace point at end of circular buffer with new point.
