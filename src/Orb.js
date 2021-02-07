@@ -25,7 +25,7 @@ export default class Orb {
   //   position: <THREE.Vector3>
   //   audioSelector: <String>
   //   audioContext: <WebAudioAPI AudioContext instance>
-  //   baseColor: <hexidecimal>
+  //   colorGradient: <[hexidecimal, hexidecimal]>
   // }
   // TODO: Typescript?
   constructor(params) {
@@ -34,6 +34,11 @@ export default class Orb {
 
     this.destination = new THREE.Vector3();
     this.setRandomDestination();
+
+    this.colorGradient = [
+      new THREE.Color(params.colorGradient[0]),
+      new THREE.Color(params.colorGradient[1]),
+    ];
 
     // Manage BufferGeometry attribute buffers as circular buffers for animation
     this.circularBufferIndex = new CircularBufferIndex(numParticles-1, numParticles);
@@ -44,13 +49,12 @@ export default class Orb {
     const positions = [];
     const colors = [];
     const sizes = [];
-    const color = new THREE.Color(params.baseColor);
     for (let i = 0; i < numParticles; i++) {
       const x = i * particleSize;
       const y = 0;
       const z = 0;
       positions.push(x, y, z);
-      colors.push(color.r, color.g, color.b);
+      colors.push(this.colorGradient[1].r, this.colorGradient[1].g, this.colorGradient[1].b);
       sizes.push(0.001);
     }
     this.bufferGeom.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
@@ -152,13 +156,17 @@ export default class Orb {
     // Update sound position
     this.pannerNode.positionX.value = this.position.x;
 
-    // Update the BufferGeometry
     this.analyser.getByteFrequencyData(this.freqDataArray);
-    const [low, mid, high] = [this.freqDataArray[0], this.freqDataArray[20], this.freqDataArray[60]];
+    const [low, mid, high] = [
+      this.freqDataArray[0],
+      this.freqDataArray[20],
+      this.freqDataArray[60]
+    ];
 
+    // Update the BufferGeometry
     // Animate the particles
     const positions = this.bufferGeom.attributes.position.array;
-    // const colors = this.bufferGeom.attributes.color.array;
+    const colors = this.bufferGeom.attributes.color.array;
     // TODO animate color and point size with the color and size buffers
 
     // 1. Increment all x positions (shift rightwards)
@@ -176,11 +184,22 @@ export default class Orb {
     positions[i + 0] = low * 0.005;  // x
     positions[i + 1] = mid * 0.005;  // y
     positions[i + 2] = high * 0.005; // z
-    // TODO Color
+    // Color
+    const normalizeFreq = (f) => f / 255.0;
+    const newColor = new THREE.Color().lerpColors(
+      this.colorGradient[0],
+      this.colorGradient[1],
+      normalizeFreq(low),
+    );
+    colors[i + 0] = newColor.r;
+    colors[i + 1] = newColor.g;
+    colors[i + 2] = newColor.b;
     // TODO Size
+    // TODO Fade opacity as the particles stream outwards
     this.circularBufferIndex.decrement();
 
     this.bufferGeom.attributes.position.needsUpdate = true;
+    this.bufferGeom.attributes.color.needsUpdate = true;
     // TODO: Perhaps need to recompute boundingBox or Sphere? https://threejs.org/docs/#manual/en/introduction/How-to-update-things
 
     // Update the Group

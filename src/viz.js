@@ -3,13 +3,14 @@ import * as THREE from "three";
 
 import Orb from "./Orb";
 import { room } from "./constants";
+// import response from "./impulse-response.wav"; // TODO
 
 const Viz = () => {
   const canvasRef = useRef(null);
-  const cameraPosition = new THREE.Vector3(10,10,room.maxZ);
+  const cameraPosition = new THREE.Vector3(0,0,room.maxZ);
 
   useEffect(() => {
-    const audioContext = new AudioContext();
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
     // Spatialization
     // Listener is our position in space
@@ -25,10 +26,12 @@ const Viz = () => {
     listener.upZ.value = 0;
 
     const orb = new Orb({
-      position: new THREE.Vector3(-15, 0, 0),
+      // position: new THREE.Vector3(-15, 0, 0), TODO
+      position: new THREE.Vector3(cameraPosition.x, cameraPosition.y, cameraPosition.z - 5),
       audioSelector: 'audio#npr',
       audioContext: audioContext,
       baseColor: 0xff0000,
+      colorGradient: [0xff4b1f, 0x1fddff],
     });
     // const orb2 = new Orb({
       // position: new THREE.Vector3(10, 0, 0),
@@ -56,12 +59,12 @@ const Viz = () => {
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x000000);
 
-    const roomCubeGeom = new THREE.CubeGeometry(room.maxX - room.minX, room.maxY - room.minY, room.maxZ - room.minZ);
-    const roomCubeMaterial = new THREE.MeshBasicMaterial({
+    const roomBoxGeom = new THREE.BoxGeometry(room.maxX - room.minX, room.maxY - room.minY, room.maxZ - room.minZ);
+    const roomBoxMaterial = new THREE.MeshBasicMaterial({
       color: 0x0000ff,
       wireframe: true,
     });
-    const roomMesh = new THREE.Mesh(roomCubeGeom, roomCubeMaterial);
+    const roomMesh = new THREE.Mesh(roomBoxGeom, roomBoxMaterial);
     scene.add(roomMesh);
 
     orb.addToScene(scene);
