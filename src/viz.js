@@ -29,9 +29,13 @@ const Viz = () => {
       // position: new THREE.Vector3(-15, 0, 0), TODO
       position: new THREE.Vector3(cameraPosition.x, cameraPosition.y, cameraPosition.z - 5),
       audioSelector: 'audio#npr',
+      // audioSelector: 'audio#random',
       audioContext: audioContext,
-      baseColor: 0xff0000,
-      colorGradient: [0xff4b1f, 0x1fddff],
+      // https://uigradients.com/
+      // colorGradient: [0xff4b1f, 0x1fddff], // Red and Teal
+      // colorGradient: [0xa80077, 0x66ff00], // Shahabi
+      colorGradient: [0xf12711, 0xf5af19], // Flare
+      // colorGradient: [0x0abfbc, 0xfc354c], // Miaka
     });
     // const orb2 = new Orb({
       // position: new THREE.Vector3(10, 0, 0),
@@ -57,12 +61,12 @@ const Viz = () => {
     renderer.setSize(window.innerWidth, window.innerHeight);
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x000000);
+    scene.background = new THREE.Color(0x2C5364);
 
     const roomBoxGeom = new THREE.BoxGeometry(room.maxX - room.minX, room.maxY - room.minY, room.maxZ - room.minZ);
     const roomBoxMaterial = new THREE.MeshBasicMaterial({
       color: 0x0000ff,
-      wireframe: true,
+      wireframe: false,
     });
     const roomMesh = new THREE.Mesh(roomBoxGeom, roomBoxMaterial);
     scene.add(roomMesh);

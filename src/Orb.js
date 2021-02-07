@@ -174,9 +174,9 @@ export default class Orb {
       positions[i + 0] += particleSize; // Increment x position
 
       // Color: Darken over time (poor-man's fade)
-      colors[i + 0] *= 0.985; // r
-      colors[i + 1] *= 0.985; // g
-      colors[i + 2] *= 0.985; // b
+      colors[i + 0] *= 0.995; // r
+      colors[i + 1] *= 0.995; // g
+      colors[i + 2] *= 0.995; // b
     }
 
     // 2. Replace point at end of circular buffer with new point.
@@ -185,9 +185,9 @@ export default class Orb {
     const cbIdx = this.circularBufferIndex.get();
     const i = cbIdx * 3;
     // Position
-    positions[i + 0] = low * 0.005;  // x
-    positions[i + 1] = mid * 0.005;  // y
-    positions[i + 2] = high * 0.005; // z
+    positions[i + 0] = low * 0.0035;  // x
+    positions[i + 1] = mid * 0.004;  // y
+    positions[i + 2] = high * 0.0006; // z
     // Color
     const normalizeFreq = (f) => f / 255.0;
     const newColor = new THREE.Color().lerpColors(
@@ -211,6 +211,7 @@ export default class Orb {
     this.group.position.y = this.position.y;
     this.group.position.z = this.position.z;
     this.group.rotation.x += 0.005;
-    this.group.rotation.y += 0.01;
+    this.group.rotation.y += 0.001;
+    this.group.rotation.z -= 0.001;
   }
 }
